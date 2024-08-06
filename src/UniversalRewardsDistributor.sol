@@ -6,6 +6,7 @@ import {PendingRoot, IUniversalRewardsDistributorStaticTyping} from "./interface
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 import {EventsLib} from "./libraries/EventsLib.sol";
 import {SafeERC20, IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Address} from "../lib/openzeppelin-contracts/contracts/utils/Address.sol";
 
 import {MerkleProof} from "../lib/openzeppelin-contracts/contracts/utils/cryptography/MerkleProof.sol";
 
@@ -17,6 +18,7 @@ import {MerkleProof} from "../lib/openzeppelin-contracts/contracts/utils/cryptog
 /// https://github.com/morpho-dao/morpho-v1/blob/main/src/common/rewards-distribution/RewardsDistributor.sol
 contract UniversalRewardsDistributor is IUniversalRewardsDistributorStaticTyping {
     using SafeERC20 for IERC20;
+    using Address for address payable;
 
     /* STORAGE */
 
@@ -201,5 +203,14 @@ contract UniversalRewardsDistributor is IUniversalRewardsDistributorStaticTyping
         timelock = newTimelock;
 
         emit EventsLib.TimelockSet(newTimelock);
+    }
+
+    function recover(IERC20 token, address payable to) external onlyOwner returns (uint256 recovered) {
+        if (address(token) == address(0)) {
+            to.sendValue(recovered = address(this).balance);
+        } else {
+            token.safeTransfer(to, recovered = token.balanceOf(address(this)));
+        }
+        emit EventsLib.FundsRecovered(address(token), recovered, to);
     }
 }

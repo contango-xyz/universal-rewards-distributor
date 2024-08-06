@@ -56,4 +56,10 @@ library EventsLib {
         bytes32 initialIpfsHash,
         bytes32 salt
     );
+
+    /// @notice Emitted when funds are recovered.
+    /// @param token The address of the token.
+    /// @param amount The amount of token recovered.
+    /// @param to The address of the destination.
+    event FundsRecovered(address indexed token, uint256 amount, address indexed to);
 }
