@@ -16,6 +16,8 @@ contract UniversalRewardsDistributorTest is Test {
     uint256 internal constant MAX_RECEIVERS = 20;
     bytes32 internal constant SALT = bytes32(0);
 
+    bytes32 internal constant DATA = "garbage in, garbage out";
+
     Merkle merkle = new Merkle();
     ERC20Mock internal token1;
     ERC20Mock internal token2;
@@ -522,11 +524,11 @@ contract UniversalRewardsDistributorTest is Test {
         bytes32[] memory proof1 = merkle.getProof(data, 0);
 
         vm.expectEmit(address(distributionWithoutTimeLock));
-        emit EventsLib.Claimed(vm.addr(1), address(token1), claimable);
-        distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable, proof1);
+        emit EventsLib.Claimed(vm.addr(1), address(token1), claimable, DATA);
+        distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable, DATA, proof1);
 
         vm.expectRevert(bytes(ErrorsLib.CLAIMABLE_TOO_LOW));
-        distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable, proof1);
+        distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable, DATA, proof1);
     }
 
     function testClaimShouldRevertIfRootMisconfigured(uint256 claimable) public {
@@ -538,7 +540,7 @@ contract UniversalRewardsDistributorTest is Test {
         vm.prank(owner);
         distributionWithoutTimeLock.setRoot(root, DEFAULT_IPFS_HASH);
         bytes32[] memory proof1 = merkle.getProof(data, 0);
-        distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable, proof1);
+        distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable, DATA, proof1);
 
         // Now we define a misconfigured root with 2x less rewards
         (bytes32[] memory missconfiguredData, bytes32 missconfiguredRoot) = _setupRewards(claimable / 2, 2);
@@ -548,7 +550,7 @@ contract UniversalRewardsDistributorTest is Test {
         bytes32[] memory missconfiguredProof1 = merkle.getProof(missconfiguredData, 0);
 
         vm.expectRevert(bytes(ErrorsLib.CLAIMABLE_TOO_LOW));
-        distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable / 2, missconfiguredProof1);
+        distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable / 2, DATA, missconfiguredProof1);
     }
 
     function testClaimShouldReturnTheAmountClaimed(uint256 claimable) public {
@@ -562,7 +564,7 @@ contract UniversalRewardsDistributorTest is Test {
         assertEq(distributionWithoutTimeLock.root(), root);
         bytes32[] memory proof1 = merkle.getProof(data, 0);
 
-        uint256 claimed = distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable, proof1);
+        uint256 claimed = distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable, DATA, proof1);
 
         assertEq(claimed, claimable);
 
@@ -576,7 +578,7 @@ contract UniversalRewardsDistributorTest is Test {
         assertEq(distributionWithoutTimeLock.root(), root2);
         bytes32[] memory proof2 = merkle.getProof(data2, 0);
 
-        uint256 claimed2 = distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable * 2, proof2);
+        uint256 claimed2 = distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable * 2, DATA, proof2);
 
         assertEq(claimed2, claimable);
     }
@@ -589,7 +591,7 @@ contract UniversalRewardsDistributorTest is Test {
         bytes32[] memory proof1 = merkle.getProof(data, 0);
 
         vm.expectRevert(bytes(ErrorsLib.ROOT_NOT_SET));
-        distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable, proof1);
+        distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable, DATA, proof1);
     }
 
     function testClaimShouldRevertIfInvalidRoot(uint256 claimable, bytes32 invalidRoot) public {
@@ -606,7 +608,7 @@ contract UniversalRewardsDistributorTest is Test {
         bytes32[] memory proof1 = merkle.getProof(data, 0);
 
         vm.expectRevert(bytes(ErrorsLib.INVALID_PROOF_OR_EXPIRED));
-        distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable, proof1);
+        distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable, DATA, proof1);
     }
 
     function _setupRewards(uint256 claimable, uint256 size)
@@ -620,10 +622,10 @@ contract UniversalRewardsDistributorTest is Test {
         while (i < size / 2) {
             uint256 index = i + 1;
             data[i] = keccak256(
-                bytes.concat(keccak256(abi.encode(vm.addr(index), address(token1), uint256(claimable / index))))
+                bytes.concat(keccak256(abi.encode(vm.addr(index), address(token1), uint256(claimable / index), DATA)))
             );
             data[i + 1] = keccak256(
-                bytes.concat(keccak256(abi.encode(vm.addr(index), address(token2), uint256(claimable / index))))
+                bytes.concat(keccak256(abi.encode(vm.addr(index), address(token2), uint256(claimable / index), DATA)))
             );
 
             i += 2;
@@ -664,13 +666,13 @@ contract UniversalRewardsDistributorTest is Test {
 
             // Claim token1
             vm.expectEmit(address(distribution));
-            emit EventsLib.Claimed(vm.addr(vars.index), address(token1), vars.claimableAdjusted1);
-            distribution.claim(vm.addr(vars.index), address(token1), vars.claimableInput, proof1);
+            emit EventsLib.Claimed(vm.addr(vars.index), address(token1), vars.claimableAdjusted1, DATA);
+            distribution.claim(vm.addr(vars.index), address(token1), vars.claimableInput, DATA, proof1);
 
             // Claim token2
             vm.expectEmit(address(distribution));
-            emit EventsLib.Claimed(vm.addr(vars.index), address(token2), vars.claimableAdjusted2);
-            distribution.claim(vm.addr(vars.index), address(token2), vars.claimableInput, proof2);
+            emit EventsLib.Claimed(vm.addr(vars.index), address(token2), vars.claimableAdjusted2, DATA);
+            distribution.claim(vm.addr(vars.index), address(token2), vars.claimableInput, DATA, proof2);
 
             uint256 balanceAfter1 = vars.balanceBefore1 + vars.claimableAdjusted1;
             uint256 balanceAfter2 = vars.balanceBefore2 + vars.claimableAdjusted2;

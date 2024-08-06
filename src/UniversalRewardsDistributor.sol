@@ -111,17 +111,18 @@ contract UniversalRewardsDistributor is IUniversalRewardsDistributorStaticTyping
     /// @param account The address to claim rewards for.
     /// @param reward The address of the reward token.
     /// @param claimable The overall claimable amount of token rewards.
+    /// @param data The optional data to be included in the claim.
     /// @param proof The merkle proof that validates this claim.
     /// @return amount The amount of reward token claimed.
     /// @dev Anyone can claim rewards on behalf of an account.
-    function claim(address account, address reward, uint256 claimable, bytes32[] calldata proof)
+    function claim(address account, address reward, uint256 claimable, bytes32 data, bytes32[] calldata proof)
         external
         returns (uint256 amount)
     {
         require(root != bytes32(0), ErrorsLib.ROOT_NOT_SET);
         require(
             MerkleProof.verifyCalldata(
-                proof, root, keccak256(bytes.concat(keccak256(abi.encode(account, reward, claimable))))
+                proof, root, keccak256(bytes.concat(keccak256(abi.encode(account, reward, claimable, data))))
             ),
             ErrorsLib.INVALID_PROOF_OR_EXPIRED
         );
@@ -134,7 +135,7 @@ contract UniversalRewardsDistributor is IUniversalRewardsDistributorStaticTyping
 
         IERC20(reward).safeTransfer(account, amount);
 
-        emit EventsLib.Claimed(account, reward, amount);
+        emit EventsLib.Claimed(account, reward, amount, data);
     }
 
     /// @notice Forces update the root of a given distribution (bypassing the timelock).
