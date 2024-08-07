@@ -33,7 +33,8 @@ library EventsLib {
     /// @param account The address for which rewards are claimed.
     /// @param reward The address of the reward token.
     /// @param amount The amount of reward token claimed.
-    event Claimed(address indexed account, address indexed reward, uint256 amount);
+    /// @param root The merkle root used to claim the reward.
+    event Claimed(address indexed account, address indexed reward, uint256 amount, bytes32 indexed root);
 
     /// @notice Emitted when the ownership of a merkle tree distribution is transferred.
     /// @param newOwner The new owner of the contract.

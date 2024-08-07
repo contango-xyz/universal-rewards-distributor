@@ -522,7 +522,7 @@ contract UniversalRewardsDistributorTest is Test {
         bytes32[] memory proof1 = merkle.getProof(data, 0);
 
         vm.expectEmit(address(distributionWithoutTimeLock));
-        emit EventsLib.Claimed(vm.addr(1), address(token1), claimable);
+        emit EventsLib.Claimed(vm.addr(1), address(token1), claimable, merkle.getRoot(data));
         distributionWithoutTimeLock.claim(vm.addr(1), address(token1), claimable, proof1);
 
         vm.expectRevert(bytes(ErrorsLib.CLAIMABLE_TOO_LOW));
@@ -664,12 +664,12 @@ contract UniversalRewardsDistributorTest is Test {
 
             // Claim token1
             vm.expectEmit(address(distribution));
-            emit EventsLib.Claimed(vm.addr(vars.index), address(token1), vars.claimableAdjusted1);
+            emit EventsLib.Claimed(vm.addr(vars.index), address(token1), vars.claimableAdjusted1, merkle.getRoot(data));
             distribution.claim(vm.addr(vars.index), address(token1), vars.claimableInput, proof1);
 
             // Claim token2
             vm.expectEmit(address(distribution));
-            emit EventsLib.Claimed(vm.addr(vars.index), address(token2), vars.claimableAdjusted2);
+            emit EventsLib.Claimed(vm.addr(vars.index), address(token2), vars.claimableAdjusted2, merkle.getRoot(data));
             distribution.claim(vm.addr(vars.index), address(token2), vars.claimableInput, proof2);
 
             uint256 balanceAfter1 = vars.balanceBefore1 + vars.claimableAdjusted1;
