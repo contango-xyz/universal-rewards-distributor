@@ -132,7 +132,7 @@ contract UniversalRewardsDistributor is IUniversalRewardsDistributorStaticTyping
 
         IERC20(reward).safeTransfer(account, amount);
 
-        emit EventsLib.Claimed(account, reward, amount);
+        emit EventsLib.Claimed(account, reward, amount, root);
     }
 
     /// @notice Forces update the root of a given distribution (bypassing the timelock).
